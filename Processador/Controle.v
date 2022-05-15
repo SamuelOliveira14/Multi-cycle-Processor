@@ -98,6 +98,7 @@ module Controle(clock,run,reset,IR,mux_control,IR_in, ADDR_in, DOUT_in, W_D, G_i
 						mux_control = 2'b01; //Ry_out
 						register_out = Ry;	//Ry_out
 						ULA_control = opcode; //Informa a operação a ser realizada pela ULA
+						G_in = 1;				//G_in
 					end
 					LD: begin
 						mux_control = 2'b00; //DIN_out
@@ -119,7 +120,7 @@ module Controle(clock,run,reset,IR,mux_control,IR_in, ADDR_in, DOUT_in, W_D, G_i
 					end
 				endcase	
 			end		
-			3'b011: begin
+			3'b011: begin //T3:
 				case(opcode)
 					ADD,SUB,OR,SLT,SLL,SRL: begin
 						register_in[Rx] = 1; //Rx_in
