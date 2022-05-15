@@ -3,7 +3,7 @@ module ULA(Ra, Ry, operacao, out);
 	input [3:0] operacao;
 	output reg [15:0] out;
 	
-	localparam ADD	= 4'b0101, SUB	= 4'b0110, OR = 4'b0111, SLT = 4'b1000, SRL = 4'b1001, SLL =4'b1010, MVNZ = 4'b0010; //Códigos de operacao
+	localparam ADD	= 4'b0101, SUB	= 4'b0110, OR = 4'b0111, SLT = 4'b1000, SRL = 4'b1001, SLL =4'b1010; //Códigos de operacao
 	
 	always@(Ra or Ry or operacao) begin 
 		case(operacao)

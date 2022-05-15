@@ -54,7 +54,7 @@ module Controle(clock,run,reset,IR,mux_control,IR_in, ADDR_in, DOUT_in, W_D, G_i
 		ULA_control = 3'b0;
 		register_in = 7'b0;
 		register_out = 3'b0;
-		
+		done = 0;
 		case(step) 
 			3'b000: begin //T0: Leitura do registrador IR
 				IR_in = 1; //Recebe a instrucao
@@ -69,14 +69,14 @@ module Controle(clock,run,reset,IR,mux_control,IR_in, ADDR_in, DOUT_in, W_D, G_i
 					end
 					LD,ST: begin 
 						mux_control = 2'b01; //Ry_out;
-						register_out = Ry;	//Ry_out;
+						register_out = Ry; //Ry_out;
 						ADDR_in = 1; //Habilita a escrita no registrador que armazena o endereço de memória.
 					end
 					MV: begin
 						register_in[Rx] = 1; //Rx_in
-						mux_control = 2'b01;	//Ry_out
-						register_out = Ry;	//Ry_out
-						done = 1;				//Termina a instrucao
+						mux_control = 2'b01; //Ry_out
+						register_out = Ry;   //Ry_out
+						done = 1;            //Termina a instrucao
 					end
 					MVNZ: begin
 						if(G_or == 1) begin
@@ -88,7 +88,7 @@ module Controle(clock,run,reset,IR,mux_control,IR_in, ADDR_in, DOUT_in, W_D, G_i
 					end
 					MVI: begin
 						mux_control = 2'b10; //PC_out
-						ADDR_in = 1; 	//ADDR_in
+						ADDR_in = 1;         //ADDR_in
 					end
 				endcase
 			end
@@ -106,17 +106,17 @@ module Controle(clock,run,reset,IR,mux_control,IR_in, ADDR_in, DOUT_in, W_D, G_i
 						done = 1;				//Fim de instrucao
 					end
 					ST: begin
-						register_out = Rx; 	//Rx_out
+						register_out = Rx;   //Rx_out
 						mux_control = 2'b01; //Rx_out
-						W_D = 1;					//Habilita a escrita na memória
-						DOUT_in = 1;			//DOUT_in
-						done = 1;				//Fim de instrucao
+						W_D = 1;             //Habilita a escrita na memória
+						DOUT_in = 1;         //DOUT_in
+						done = 1;            //Fim de instrucao
 					end
 					MVI: begin
 						mux_control = 2'b00; //DIN_out
 						register_in[Rx] = 1;	//Rx_in
-						incr_PC = 1;			//Incr_PC para ir pra proxima instrucao
-						done = 1;				//Fim de instrucao
+						incr_PC = 1;         //Incr_PC para ir pra proxima instrucao
+						done = 1;            //Fim de instrucao
 					end
 				endcase	
 			end		
@@ -125,7 +125,7 @@ module Controle(clock,run,reset,IR,mux_control,IR_in, ADDR_in, DOUT_in, W_D, G_i
 					ADD,SUB,OR,SLT,SLL,SRL: begin
 						register_in[Rx] = 1; //Rx_in
 						mux_control = 2'b11;	//G_out
-						done = 1;				//Fim de instrucao
+						done = 1;            //Fim de instrucao
 					end
 				endcase
 			end
