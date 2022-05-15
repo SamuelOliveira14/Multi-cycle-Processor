@@ -1,12 +1,12 @@
-module Controle(clock,run,reset,IR,mux_control,IR_in, ADDR_in, DOUT_in, W_D, G_in, A_in, incr_PC, PC_in, mux_control, ULA_control,register_in,register_out);
+module Controle(clock,run,reset,IR,mux_control,IR_in, ADDR_in, DOUT_in, W_D, G_in, A_in, incr_PC, PC_in, mux_control, ULA_control,register_in,register_out,G_or);
 
-	input clock,run,reset;
+	input clock,run,reset,G_or;
 	input [9:0] IR; //[(opcode - 4bits) - (Rx - 3 bits) - (Ry - 3 bits)] = 10 bits
 	
 	output reg IR_in, ADDR_in, DOUT_in, W_D, G_in, A_in, incr_PC, PC_in; // Habilita a escrita nos demais registradores.
 	
 	output reg[1:0] mux_control;	//Informa qual dado irá sair no multiplexador
-	output reg[2:0] ULA_control; 	//Informa a operação a ser realizada pela ULA
+	output reg[3:0] ULA_control; 	//Informa a operação a ser realizada pela ULA
 	output reg[6:0] register_in;	//Informa quais registradores serão escritos
 	output reg[2:0] register_out; //Informa qual registrador será lido
 	reg [2:0] step; //Passo atual da instrução
@@ -40,6 +40,7 @@ module Controle(clock,run,reset,IR,mux_control,IR_in, ADDR_in, DOUT_in, W_D, G_i
 	end
 	
 	/*
+	Multiplexadores
 	2'b00: out = DIN_out;
 	2'b01: out = register_out;
 	2'b10: out = PC_out;
@@ -56,13 +57,15 @@ module Controle(clock,run,reset,IR,mux_control,IR_in, ADDR_in, DOUT_in, W_D, G_i
 		
 		case(step) 
 			3'b000: begin //T0: Leitura do registrador IR
-				IR_in = 1;
+				IR_in = 1; //Recebe a instrucao
+				incr_PC = 1; //Incrementa PC
 			end
 			3'b001: begin //T1: 
 				case(opcode)//opcode
 					ADD,SUB,OR,SLT,SLL,SRL: begin
 						mux_control = 2'b01; // Rx_out;
 						register_out = Rx;	//Rx_out;
+						A_in = 1;
 					end
 					LD,ST: begin 
 						mux_control = 2'b01; //Ry_out;
@@ -73,28 +76,58 @@ module Controle(clock,run,reset,IR,mux_control,IR_in, ADDR_in, DOUT_in, W_D, G_i
 						register_in[Rx] = 1; //Rx_in
 						mux_control = 2'b01;	//Ry_out
 						register_out = Ry;	//Ry_out
+						done = 1;				//Termina a instrucao
 					end
 					MVNZ: begin
-						mux_control = 2'b11; //G_out
+						if(G_or == 1) begin
+							register_in[Rx] = 1; //Rx_in
+							register_out = Ry; 	//Ry_out
+							mux_control = 2'b01;	//Ry_out
+						end
+						done = 1; //Fim de instrucao
 					end
 					MVI: begin
-						mux_control = 2'b00; //DIN_out
-						register_in[Rx] = 1; //Rx_in
+						mux_control = 2'b10; //PC_out
+						ADDR_in = 1; 	//ADDR_in
 					end
 				endcase
 			end
-			3'b010: begin 
+			3'b010: begin //T2: 
 				case(opcode)
 					ADD,SUB,OR,SLT,SLL,SRL: begin
 						mux_control = 2'b01; //Ry_out
 						register_out = Ry;	//Ry_out
+						ULA_control = opcode; //Informa a operação a ser realizada pela ULA
 					end
 					LD: begin
-						//
+						mux_control = 2'b00; //DIN_out
+						register_in[Rx] = 1;	//Rx_in
+						done = 1;				//Fim de instrucao
+					end
+					ST: begin
+						register_out = Rx; 	//Rx_out
+						mux_control = 2'b01; //Rx_out
+						W_D = 1;					//Habilita a escrita na memória
+						DOUT_in = 1;			//DOUT_in
+						done = 1;				//Fim de instrucao
+					end
+					MVI: begin
+						mux_control = 2'b00; //DIN_out
+						register_in[Rx] = 1;	//Rx_in
+						incr_PC = 1;			//Incr_PC para ir pra proxima instrucao
+						done = 1;				//Fim de instrucao
+					end
+				endcase	
+			end		
+			3'b011: begin
+				case(opcode)
+					ADD,SUB,OR,SLT,SLL,SRL: begin
+						register_in[Rx] = 1; //Rx_in
+						mux_control = 2'b11;	//G_out
+						done = 1;				//Fim de instrucao
 					end
 				endcase
-			end		
-				
+			end
 		endcase //End case(step)
 			
 	end//End always
