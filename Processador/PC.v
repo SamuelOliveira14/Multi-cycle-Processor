@@ -6,7 +6,7 @@ module PC(clock,incr_PC,Rin,out,data);
 	
 	
 	initial begin
-		Q = 16'b0;
+		Q = 16'b0; //Inicializa na primeira instrucao
 	end
 	
 	always@(posedge clock) begin 

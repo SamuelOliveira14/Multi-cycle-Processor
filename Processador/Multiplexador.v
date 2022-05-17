@@ -9,6 +9,7 @@ module Multiplexador(mux_control,DIN_out,register_out,PC_out,G_out,out);
 			2'b01: out = register_out;
 			2'b10: out = PC_out;
 			2'b11: out = G_out;
+			default: out = 16'b0;
 		endcase
 	end
 	

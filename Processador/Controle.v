@@ -1,4 +1,4 @@
-module Controle(clock,run,reset,IR,mux_control,IR_in, ADDR_in, DOUT_in, W_D, G_in, A_in, incr_PC, PC_in, mux_control, ULA_control,register_in,register_out,G_or);
+module Controle(clock,run,reset,IR,G_or,IR_in, ADDR_in, DOUT_in, W_D, G_in, A_in, incr_PC, PC_in, mux_control, ULA_control,register_in,register_out);
 
 	input clock,run,reset,G_or;
 	input [9:0] IR; //[(opcode - 4bits) - (Rx - 3 bits) - (Ry - 3 bits)] = 10 bits
@@ -30,17 +30,18 @@ module Controle(clock,run,reset,IR,mux_control,IR_in, ADDR_in, DOUT_in, W_D, G_i
 	always@(posedge clock or posedge reset) begin
 		if(reset) begin 
 			step = 0;
-		end
-		if(run) begin 
-			step = step + 1;
-		end
-		if(done) begin 
-			step = 0;
+		end else begin
+			if(run) begin 
+				step = step + 1;
+			end
+			if(done) begin 
+				step = 0;
+			end
 		end
 	end
 	
 	/*
-	Multiplexadores
+	Multiplexador
 	2'b00: out = DIN_out;
 	2'b01: out = register_out;
 	2'b10: out = PC_out;
@@ -55,6 +56,9 @@ module Controle(clock,run,reset,IR,mux_control,IR_in, ADDR_in, DOUT_in, W_D, G_i
 		register_in = 7'b0;
 		register_out = 3'b0;
 		done = 0;
+		
+		//TODO: Arrumar os casos onde a instruçao termina e adicionar done = 1.
+		
 		case(step) 
 			3'b000: begin //T0: Leitura do registrador IR
 				IR_in = 1; //Recebe a instrucao
@@ -76,7 +80,7 @@ module Controle(clock,run,reset,IR,mux_control,IR_in, ADDR_in, DOUT_in, W_D, G_i
 						register_in[Rx] = 1; //Rx_in
 						mux_control = 2'b01; //Ry_out
 						register_out = Ry;   //Ry_out
-						done = 1;            //Termina a instrucao
+						
 					end
 					MVNZ: begin
 						if(G_or == 1) begin
@@ -84,7 +88,7 @@ module Controle(clock,run,reset,IR,mux_control,IR_in, ADDR_in, DOUT_in, W_D, G_i
 							register_out = Ry; 	//Ry_out
 							mux_control = 2'b01;	//Ry_out
 						end
-						done = 1; //Fim de instrucao
+						
 					end
 					MVI: begin
 						mux_control = 2'b10; //PC_out
@@ -103,20 +107,24 @@ module Controle(clock,run,reset,IR,mux_control,IR_in, ADDR_in, DOUT_in, W_D, G_i
 					LD: begin
 						mux_control = 2'b00; //DIN_out
 						register_in[Rx] = 1;	//Rx_in
-						done = 1;				//Fim de instrucao
+						
 					end
 					ST: begin
 						register_out = Rx;   //Rx_out
 						mux_control = 2'b01; //Rx_out
 						W_D = 1;             //Habilita a escrita na memória
 						DOUT_in = 1;         //DOUT_in
-						done = 1;            //Fim de instrucao
+						
 					end
 					MVI: begin
 						mux_control = 2'b00; //DIN_out
 						register_in[Rx] = 1;	//Rx_in
 						incr_PC = 1;         //Incr_PC para ir pra proxima instrucao
-						done = 1;            //Fim de instrucao
+					end
+					MVNZ,MV: begin
+						mux_control = 2'b10; //PC_out
+						ADDR_in = 1; //ADDR_in
+						done = 1; //Termina a instrucao
 					end
 				endcase	
 			end		
@@ -125,7 +133,20 @@ module Controle(clock,run,reset,IR,mux_control,IR_in, ADDR_in, DOUT_in, W_D, G_i
 					ADD,SUB,OR,SLT,SLL,SRL: begin
 						register_in[Rx] = 1; //Rx_in
 						mux_control = 2'b11;	//G_out
-						done = 1;            //Fim de instrucao
+					end
+					MVI,LD,ST: begin
+						mux_control = 2'b10; //PC_out
+						ADDR_in = 1; //ADDR_in
+						done = 1; //Termina a instrucao
+					end
+				endcase
+			end
+			3'b100: begin 
+				case(opcode)
+					ADD,SUB,OR,SLT,SLL,SRL: begin
+						mux_control = 2'b10; //PC_out
+						ADDR_in = 1; //ADDR_in
+						done = 1; //Termina a instrucao
 					end
 				endcase
 			end
