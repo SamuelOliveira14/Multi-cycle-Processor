@@ -1,2 +1,2 @@
-# LAOC-II-Pratica-II
-Esta prática tem o objetivo de criar uma processador multiciclos simplificado.
+# Laboratório de Arquitetura e Organização de Computadores II: Pratica-II
+Processador multiciclos de 16 bits simplificado.
